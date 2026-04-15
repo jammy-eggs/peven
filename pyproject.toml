@@ -1,6 +1,6 @@
 [project]
 name = "peven"
-version = "0.1.0"
+version = "0.1.1"
 description = "Topological runtime for declarative evaluations"
 license = "Apache-2.0"
 readme = "README.md"
@@ -28,6 +28,23 @@ peven = "peven.cli.main:app"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build]
+exclude = [
+    ".codex/",
+    ".codex-venv/",
+    ".pytest_cache/",
+    ".ruff_cache/",
+    ".venv/",
+    "AGENTS.md",
+    "build-env-*",
+    "build-via-sdist-*",
+    "dist/",
+    "showcase/",
+    "examples/staged.py",
+    "tests/test_showcase.py",
+    "tests/test_showcase_cli.py",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/peven"]
 
@@ -49,10 +66,3 @@ timeout = 10
 
 [tool.coverage.report]
 exclude_lines = ["if __name__ == .__main__.:"]
-
-[tool.ruff]
-target-version = "py311"
-line-length = 99
-
-[tool.ruff.lint]
-select = ["E", "F", "W", "I"]

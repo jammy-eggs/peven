@@ -2,21 +2,30 @@
 
 from __future__ import annotations
 
-from typing import Optional, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from pydantic_ai import Agent as PydanticAgent
-from rubric import Rubric
 
 from peven.petri.schema import Token, TransitionConfig
 from peven.petri.types import GenerateOutput, JudgeOutput
+from rubric import Rubric
 
 
 def _extract_text(tokens: list[Token]) -> str:
-    """Pull text from the first GenerateOutput token."""
+    """Render text from every textual input token in order."""
+    texts: list[str] = []
     for token in tokens:
         if isinstance(token, GenerateOutput):
-            return token.text
-    return ""
+            texts.append(token.text)
+            continue
+        text = getattr(token, "text", None)
+        if isinstance(text, str):
+            texts.append(text)
+    if not texts:
+        return ""
+    if len(texts) == 1:
+        return texts[0]
+    return "\n\n".join(texts)
 
 
 # -- Protocol ------------------------------------------------------------------
@@ -24,7 +33,7 @@ def _extract_text(tokens: list[Token]) -> str:
 
 @runtime_checkable
 class Executor(Protocol):
-    async def execute(self, inputs: list[Token], config: Optional[TransitionConfig]) -> Token: ...
+    async def execute(self, inputs: list[Token], config: TransitionConfig | None) -> Token: ...
 
 
 # -- Built-in executors --------------------------------------------------------
@@ -33,7 +42,7 @@ class Executor(Protocol):
 class Agent:
     """LLM generation via pydantic_ai."""
 
-    async def execute(self, inputs: list[Token], config: Optional[TransitionConfig]) -> Token:
+    async def execute(self, inputs: list[Token], config: TransitionConfig | None) -> Token:
         from peven.petri.schema import GenerateConfig
 
         if not isinstance(config, GenerateConfig):
@@ -62,10 +71,9 @@ _GRADERS = {
 class RubricJudge:
     """Rubric-based scoring."""
 
-    async def execute(self, inputs: list[Token], config: Optional[TransitionConfig]) -> Token:
+    async def execute(self, inputs: list[Token], config: TransitionConfig | None) -> Token:
         import rubric.autograders as graders
         import rubric.autograders.schemas as schemas
-
         from peven.petri.schema import JudgeConfig
 
         if not isinstance(config, JudgeConfig):

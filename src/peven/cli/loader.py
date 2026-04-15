@@ -1,4 +1,4 @@
-"""Load a Net from a Python eval file by convention.
+"""Load a Net from a trusted Python eval file by convention.
 
 Discovers:
     net   — required, a Net instance
@@ -11,7 +11,6 @@ from __future__ import annotations
 import importlib.util
 import sys
 from pathlib import Path
-from typing import Optional
 
 from peven.petri.schema import Net, Token
 
@@ -20,8 +19,8 @@ class LoadError(Exception):
     """Raised when the eval file can't be loaded or is missing required objects."""
 
 
-def load(path: str) -> tuple[Net, Optional[list[Token]], Optional[str]]:
-    """Import the file at *path* and extract net, rows, place."""
+def load(path: str) -> tuple[Net, list[Token] | None, str | None]:
+    """Import and execute a trusted eval file, then extract net, rows, place."""
     p = Path(path).resolve()
     if not p.exists():
         raise LoadError(f"File not found: {path}")

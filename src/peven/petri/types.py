@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
-from rubric import CriterionReport
 
 from peven.petri.schema import Token
+from rubric import CriterionReport
+
 
 # -- Colored tokens (executor outputs) ----------------------------------------
 
@@ -18,27 +19,45 @@ class GenerateOutput(Token):
 
 class JudgeOutput(Token):
     score: float
-    raw_score: Optional[float] = Field(default=None)
-    llm_raw_score: Optional[float] = Field(default=None)
-    report: Optional[list[CriterionReport]] = Field(default=None)
+    raw_score: float | None = Field(default=None)
+    llm_raw_score: float | None = Field(default=None)
+    report: list[CriterionReport] | None = Field(default=None)
+
+
+class TokenSnapshot(Token):
+    """Stored representation for custom token outputs."""
+
+    type_name: str
+    payload: dict[str, Any] = Field(default_factory=dict)
 
 
 # -- Results -------------------------------------------------------------------
+
+RunStatus = Literal["completed", "failed", "incomplete"]
+TerminalReason = Literal[
+    "completed",
+    "executor_failed",
+    "guard_error",
+    "missing_score",
+    "no_enabled_transition",
+    "fuse_exhausted",
+]
 
 
 class TransitionResult(BaseModel):
     transition_id: str
     status: Literal["completed", "failed"]
-    output: Optional[GenerateOutput | JudgeOutput] = Field(default=None)
-    error: Optional[str] = Field(default=None)
-    run_id: Optional[str] = Field(default=None)
+    output: Token | None = Field(default=None)
+    error: str | None = Field(default=None)
+    run_id: str | None = Field(default=None)
 
 
 class RunResult(BaseModel):
-    run_id: Optional[str] = Field(default=None)
-    status: Literal["completed", "failed"] = Field(default="completed")
-    score: Optional[float] = Field(default=None)
-    error: Optional[str] = Field(default=None)
+    run_id: str | None = Field(default=None)
+    status: RunStatus = Field(default="completed")
+    terminal_reason: TerminalReason | None = Field(default=None)
+    score: float | None = Field(default=None)
+    error: str | None = Field(default=None)
     trace: list[TransitionResult] = Field(default_factory=list)
 
 
@@ -50,10 +69,10 @@ class StoredRun(BaseModel):
 
     id: str
     timestamp: str
-    file: Optional[str] = Field(default=None)
-    status: Literal["completed", "failed"]
-    score: Optional[float] = Field(default=None)
-    error: Optional[str] = Field(default=None)
+    file: str | None = Field(default=None)
+    status: RunStatus
+    score: float | None = Field(default=None)
+    error: str | None = Field(default=None)
     result_count: int
     results: list[RunResult]
 
@@ -63,7 +82,7 @@ class RunSummary(BaseModel):
 
     id: str
     timestamp: str
-    file: Optional[str] = Field(default=None)
-    status: Literal["completed", "failed"]
-    score: Optional[float] = Field(default=None)
+    file: str | None = Field(default=None)
+    status: RunStatus
+    score: float | None = Field(default=None)
     result_count: int
