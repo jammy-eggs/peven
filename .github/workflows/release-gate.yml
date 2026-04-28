@@ -67,8 +67,6 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    env:
-      JULIA_DEPOT_PATH: ${{ runner.temp }}/julia-depot
 
     steps:
       - name: Check out repository
@@ -89,6 +87,8 @@ jobs:
           path: dist
 
       - name: Install from wheel with uv and run a default-runtime smoke
+        env:
+          JULIA_DEPOT_PATH: ${{ runner.temp }}/julia-depot
         run: |
           tmpdir="$(mktemp -d)"
           uv init --bare "$tmpdir/uv-add-smoke"
