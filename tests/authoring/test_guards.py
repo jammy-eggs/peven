@@ -116,6 +116,9 @@ def test_validate_guard_tree_rejects_boolean_producers_in_scalar_positions() -> 
     with pytest.raises(ValueError, match="guard cmp children must be scalar-valued"):
         validate_guard_tree(peven.guard.Cmp("==", peven.isempty(peven.f.items), literal(True)))
 
+    with pytest.raises(ValueError, match="guard cmp children must be scalar-valued"):
+        validate_guard_tree(peven.f.value == peven.isempty(peven.f.items))
+
     with pytest.raises(ValueError, match="guard in ref must be scalar-valued"):
         validate_guard_tree(peven.in_(peven.isempty(peven.f.items), [True]))
 
@@ -172,11 +175,19 @@ def test_guard_operator_helpers_and_fieldref_methods_are_explicit() -> None:
     or_guard = (peven.f.left != 1) | (peven.f.right <= 3)
     ge_guard = peven.f.score >= 2
     lt_guard = peven.f.rank < 5
+    field_guard = peven.f.turns < peven.f.max_turns
     nested = peven.f.payload.__getattr__("case_id")
 
     assert isinstance(or_guard, Or)
     assert ge_guard.to_spec()["op"] == ">="
     assert lt_guard.to_spec()["op"] == "<"
+    assert field_guard.to_spec() == {
+        "kind": "cmp",
+        "op": "<",
+        "left": {"kind": "field_ref", "path": ["turns"]},
+        "right": {"kind": "field_ref", "path": ["max_turns"]},
+    }
+    validate_guard_tree(field_guard)
     assert nested.to_spec() == {"kind": "field_ref", "path": ["payload", "case_id"]}
     assert peven.isnothing(peven.f.value).to_spec()["name"] == "isnothing"
     assert peven.length(peven.f.items).to_spec()["name"] == "length"

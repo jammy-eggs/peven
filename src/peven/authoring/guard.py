@@ -50,22 +50,25 @@ class GuardNode:
     def __eq__(self, other: object) -> bool:
         # The DSL returns a comparison node at runtime, but we keep the
         # signature object-compatible so static type checkers accept it.
-        return cast(bool, Cmp("==", coerce_guard_node(self), literal(other)))
+        return cast(bool, self._cmp("==", other))
 
     def __ne__(self, other: object) -> bool:
-        return cast(bool, Cmp("!=", coerce_guard_node(self), literal(other)))
+        return cast(bool, self._cmp("!=", other))
 
     def __lt__(self, other: object) -> Cmp:
-        return Cmp("<", coerce_guard_node(self), literal(other))
+        return self._cmp("<", other)
 
     def __le__(self, other: object) -> Cmp:
-        return Cmp("<=", coerce_guard_node(self), literal(other))
+        return self._cmp("<=", other)
 
     def __gt__(self, other: object) -> Cmp:
-        return Cmp(">", coerce_guard_node(self), literal(other))
+        return self._cmp(">", other)
 
     def __ge__(self, other: object) -> Cmp:
-        return Cmp(">=", coerce_guard_node(self), literal(other))
+        return self._cmp(">=", other)
+
+    def _cmp(self, op: str, other: object) -> Cmp:
+        return Cmp(op, self, coerce_guard_operand(other))
 
 
 @dataclass(frozen=True, slots=True, eq=False)
@@ -89,7 +92,7 @@ class FieldRef(GuardNode):
 
     def __getitem__(self, key: object) -> FieldRef:
         del key
-        reject_indexing(error_message="guard field refs do not support indexing in v0.2a")
+        reject_indexing(error_message="guard field refs do not support indexing")
 
     def to_spec(self) -> dict[str, object]:
         return {"kind": "field_ref", "path": list(self.path)}
@@ -225,7 +228,7 @@ class _FieldRoot:
 
     def __getitem__(self, key: object) -> FieldRef:
         del key
-        reject_indexing(error_message="guard field refs do not support indexing in v0.2a")
+        reject_indexing(error_message="guard field refs do not support indexing")
 
 
 f: Final[_FieldRoot] = _FieldRoot()
@@ -267,8 +270,15 @@ def coerce_guard_node(value: object) -> GuardNode:
     raise TypeError("guard operands must be built from peven.guard nodes")
 
 
+def coerce_guard_operand(value: object) -> GuardNode:
+    """Normalize one comparison operand into a guard node."""
+    if isinstance(value, GuardNode):
+        return value
+    return literal(value)
+
+
 def validate_guard_tree(node: GuardNode) -> None:
-    """Validate one guard tree against the v0.2a public DSL contract."""
+    """Validate one guard tree against the public DSL contract."""
     _validate_guard_node(node)
 
 

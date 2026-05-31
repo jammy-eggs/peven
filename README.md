@@ -185,6 +185,12 @@ The repo examples are intentionally small but representative:
 
 ## Release notes
 
+### 0.2.3
+
+- Added guard comparisons between field references, such as
+  `peven.f.turns < peven.f.max_turns`.
+- Removed fossilized version labels from guard and join indexing errors.
+
 ### 0.2.2
 
 - Added optional input arcs via `peven.input(..., optional=True)`.
