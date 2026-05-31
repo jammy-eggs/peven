@@ -4,12 +4,22 @@ Peven is Python authoring for structured LLM environments backed by a Julia Petr
 
 If PydanticAI makes it easy to build agents, Peven makes it easy to build the environment around them: places, transitions, joins, guards, retries, and the topology you want to evaluate.
 
+## Interactive examples
+
+A MiniGrid DoorKey rollout with the Petri net execution trace is shown here:
+
+[View the Peven MiniGrid demo](https://www.sekaitc.me/peven)
+
 ## Why use it
 
 - Author environments in Python, next to the agents and tools you already write.
 - Make topology explicit instead of hiding it inside one giant agent loop.
 - Run the hard state-machine part on a Julia engine built for Petri nets and concurrent firing.
 - Compare workflows: single-shot, judge loops, keyed joins, guarded retries, branch-and-merge topologies.
+
+## When not to use it
+
+Peven is probably overkill for a single prompt, a linear chain, or an agent loop that is easier to read as ordinary Python. It starts to pay for itself when the environment has real topology: branching, joins, guards, retries, traces, or reproducible state you want to inspect and compare.
 
 ## Install
 
@@ -40,10 +50,18 @@ uv run peven-install
 or
 
 ```bash
-uv run peven install-runtime
+uv run peven install-runtime --verbose
 ```
 
-If you skip that step, the first `Env.run()` will do the same provisioning automatically.
+To check the Python-to-Julia runtime wiring, run:
+
+```bash
+uv run peven doctor
+```
+
+A healthy install prints the resolved Julia executable, Julia project, Julia version, and `doctor_ok`. If setup fails, rerun with `peven install-runtime --verbose` and include that output in the bug report.
+
+If you skip explicit setup, the first `Env.run()` will do the same provisioning automatically.
 
 
 ## Quickstart
@@ -119,6 +137,27 @@ maps directly to `ArcFrom(...; optional=true)` in `Peven.jl`. Optional arcs must
 not be used on keyed joins, and a transition still needs at least one required
 input.
 
+## Tracing runs
+
+Peven can stream the run as it happens. `RichSink` renders a live terminal trace
+of run start/finish events, transition firings, retries, failures, guard errors,
+timings, and final marking. `JSONLSink` writes the same event stream as one JSON
+record per line for later inspection.
+
+```python
+sink = peven.CompositeSink(
+    peven.RichSink(show_payloads=True),
+    peven.JSONLSink("runs/trace.jsonl"),
+)
+
+result = SingleQuestionEnv().run(sink=sink)
+```
+
+Executors can add local trace records with `ctx.trace(...)`. When using
+PydanticAI, pass `peven.integrations.pydantic_ai.event_stream_handler(ctx, ...)`
+to an agent run to include model/tool stream events in the same sink. See
+`examples/trace.py` for a small tool-and-judge trace with `fuse` support.
+
 ## Why Julia
 
 The Julia side is not there for novelty. It keeps the engine closer to the real Petri-net model.
@@ -145,6 +184,12 @@ The repo examples are intentionally small but representative:
 - `examples/minigrid/` — MiniGrid DoorKey with a mover, planner, fog memory, and terminal scoring
 
 ## Release notes
+
+### 0.2.3
+
+- Added guard comparisons between field references, such as
+  `peven.f.turns < peven.f.max_turns`.
+- Removed fossilized version labels from guard and join indexing errors.
 
 ### 0.2.2
 

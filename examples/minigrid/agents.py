@@ -98,9 +98,7 @@ def _mover_prompt(
     advice = None if plan is None else str(plan.get("advice") or "")
     planner_advice = "" if advice is None else _planner_advice(advice)
     action_basis = (
-        "live state.\n"
-        if advice is None
-        else "live state or planner advice.\n"
+        "live state.\n" if advice is None else "live state or planner advice.\n"
     )
     return (
         "Choose one MiniGrid action.\n"

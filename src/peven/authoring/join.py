@@ -43,7 +43,7 @@ class PayloadRef(JoinNode):
 
     def __getitem__(self, key: object) -> PayloadRef:
         del key
-        reject_indexing(error_message="join_by payload refs do not support indexing in v0.4")
+        reject_indexing(error_message="join_by payload refs do not support indexing")
 
     def to_spec(self) -> dict[str, object]:
         return {"kind": "payload_ref", "path": list(self.path)}
@@ -92,7 +92,7 @@ class _PayloadRoot:
 
     def __getitem__(self, key: object) -> PayloadRef:
         del key
-        reject_indexing(error_message="join_by payload refs do not support indexing in v0.4")
+        reject_indexing(error_message="join_by payload refs do not support indexing")
 
 
 payload: Final[_PayloadRoot] = _PayloadRoot()
@@ -126,7 +126,7 @@ def coerce_join_node(value: object) -> JoinNode:
 
 
 def validate_join_tree(node: JoinNode) -> None:
-    """Validate one join-selector tree against the v0.4 keyed-join contract."""
+    """Validate one join-selector tree against the public keyed-join contract."""
     _validate_join_node(node)
 
 
