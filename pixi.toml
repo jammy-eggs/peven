@@ -1,0 +1,23 @@
+[workspace]
+name = "peven"
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "linux-64"]
+
+[dependencies]
+python = ">=3.12,<3.13"
+pytest = ">=8.3"
+ruff = ">=0.11"
+hatchling = ">=1.27"
+
+[target.linux-64.dependencies]
+julia = ">=1.12"
+
+[pypi-dependencies]
+peven = { path = ".", editable = true }
+
+[tasks]
+lint = "ruff check ."
+format = "ruff format ."
+test = "python -m pytest"
+build = "hatchling build"
+setup = "peven setup --yes"

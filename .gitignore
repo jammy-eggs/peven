@@ -2,6 +2,7 @@
 
 .venv/
 .uv-cache/
+.pixi/
 .pytest_cache/
 .hypothesis/
 .ruff_cache/

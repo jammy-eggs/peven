@@ -5,7 +5,6 @@ on:
     paths:
       - ".github/workflows/release-gate.yml"
       - ".github/workflows/publish.yml"
-      - "examples/**"
       - "pyproject.toml"
       - "README.md"
       - "LICENSE"
@@ -16,7 +15,6 @@ on:
     paths:
       - ".github/workflows/release-gate.yml"
       - ".github/workflows/publish.yml"
-      - "examples/**"
       - "pyproject.toml"
       - "README.md"
       - "LICENSE"
@@ -40,7 +38,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: "3.12"
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.1.0
@@ -49,7 +47,7 @@ jobs:
         run: uv sync --dev
 
       - name: Lint
-        run: uv run ruff check src tests examples
+        run: uv run ruff check src tests
 
       - name: Run test suite
         run: uv run pytest -q
@@ -75,7 +73,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: "3.12"
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.1.0
@@ -86,38 +84,37 @@ jobs:
           name: dist
           path: dist
 
-      - name: Install from wheel with uv and run a default-runtime smoke
-        env:
-          JULIA_DEPOT_PATH: ${{ runner.temp }}/julia-depot
+      - name: Install from wheel with uv and run an authoring smoke
         run: |
           tmpdir="$(mktemp -d)"
           uv init --bare "$tmpdir/uv-add-smoke"
           cd "$tmpdir/uv-add-smoke"
           uv add "$GITHUB_WORKSPACE"/dist/peven-*.whl
-          uv run python -c "import peven; peven.install_runtime()"
+          uv run peven setup --help
           uv run python - <<'PY'
           import peven
 
           @peven.executor("finish")
-          async def finish(ctx, ready):
-              del ready
-              return ctx.token({"ok": True})
+          async def finish(ctx, store):
+              return {}
 
           @peven.env("uv_add_smoke")
-          class UVAddSmokeEnv(peven.Env):
+          class UVAddSmoke:
               ready = peven.place()
-              done = peven.place()
-
-              def initial_marking(self) -> peven.Marking:
-                  return peven.marking(ready=[{"seed": True}])
-
+              done = peven.place(terminal=True)
               step = peven.transition(
                   inputs=["ready"],
                   outputs=["done"],
                   executor="finish",
               )
 
-          result = UVAddSmokeEnv().run()
-          assert result.status == "completed"
-          assert result.final_marking["done"][0].payload == {"ok": True}
+          lowered = peven.net(UVAddSmoke).lower()
+          assert lowered["name"] == "uv_add_smoke"
+          assert [t["executor"] for t in lowered["transitions"]] == ["finish"]
+
+          marking = peven.initialMarking(
+              runKey=peven.runKey("smoke#g0"),
+              tokens=[("ready", "seed", {"ok": True})],
+          )
+          assert marking.lower()["tokensByPlace"]["ready"][0]["runKey"] == "smoke#g0"
           PY

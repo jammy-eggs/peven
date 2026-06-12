@@ -4,70 +4,53 @@ build-backend = "hatchling.build"
 
 [project]
 name = "peven"
-version = "0.2.3"
-description = "Python authoring for structured LLM environments powered by a Julia Petri-net runtime"
+version = "0.3.0"
+description = "Python authoring for Peven nets"
 readme = "README.md"
 license = "Apache-2.0"
 authors = [
     { name = "Ulysses Sekai Tully Carr" },
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
-    "juliapkg>=0.1.13",
-    "msgspec>=0.19.0",
-    "packaging>=24.0",
-    "pydantic-ai==1.89.1",
-    "rich>=13.9.0",
+    "msgpack>=1.0",
+    "pyzmq>=26.0",
 ]
 keywords = [
     "agents",
     "evaluation",
     "llm",
     "petri-net",
-    "pydantic-ai",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Typing :: Typed",
 ]
 
+[project.scripts]
+peven = "peven.__main__:main"
+
 [project.urls]
 Homepage = "https://github.com/jammy-eggs/peven"
 Repository = "https://github.com/jammy-eggs/peven"
 Issues = "https://github.com/jammy-eggs/peven/issues"
 
-[project.scripts]
-peven = "peven.cli:main"
-peven-install = "peven.cli:install_runtime_main"
-
 [dependency-groups]
 dev = [
-    "coverage[toml]>=7.8.0",
-    "hypothesis>=6.130.0",
     "pytest>=8.3.0",
-    "pytest-asyncio>=0.25.0",
-    "pytest-cov>=6.1.1",
-    "rich>=13.9.0",
     "ruff>=0.11.0",
-]
-examples = [
-    "gymnasium>=1.0.0",
-    "minigrid>=3.0.0",
 ]
 
 [tool.hatch.build]
 exclude = [
     ".claude/",
-    ".coverage",
     ".github/",
-    ".hypothesis/",
     ".pytest_cache/",
     ".ruff_cache/",
     ".serena/",
@@ -84,9 +67,4 @@ packages = ["src/peven"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-asyncio_mode = "auto"
-markers = [
-    "integration: tests that exercise real external processes or toolchains",
-    "slow: tests that may perform real Julia resolution or installation work",
-    "ollama: tests that require a local ollama server with specific models loaded",
-]
+python_files = ["*.py"]
